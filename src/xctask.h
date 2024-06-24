@@ -40,4 +40,18 @@ typedef enum {
 
 XcTaskResult XcTask2Xml(char *text, char *taskfile, char *wptfile);
 
+
+
+/* Struktur für Koordinaten */
+typedef struct {
+    double lon;
+    double lat;
+    int alt;
+    int rad;
+} Coordinate;
+
+Coordinate* decodePolyline(const char* str, int precision, int* size);
+
+
+
 #endif // XCTASK_H

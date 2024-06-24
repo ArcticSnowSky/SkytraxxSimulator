@@ -188,3 +188,77 @@ Error:
 }
 
 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+
+/* Funktion zum Dekodieren einer Polyline */
+Coordinate* decodePolyline(const char* str, int precision, int* size) {
+    int index = 0, shift, result, byte;
+    double lon = 0, lat = 0;
+    int alt = 0, rad = 0;
+    int longitude_change, latitude_change, altitude_change, radius_change = 0;
+    double factor = pow(10, precision);
+    Coordinate* coordinates = NULL;
+    int coordinates_size = 0;
+
+    while (str[index] != '\0') {
+        /* Längengrad ändern */
+        shift = result = 0;
+        do {
+            byte = str[index++] - 63;
+            result |= (byte & 0x1f) << shift;
+            shift += 5;
+        } while (byte >= 0x20);
+        longitude_change = (result & 1) ? ~(result >> 1) : (result >> 1);
+
+        /* Breitengrad ändern */
+        shift = result = 0;
+        do {
+            byte = str[index++] - 63;
+            result |= (byte & 0x1f) << shift;
+            shift += 5;
+        } while (byte >= 0x20);
+        latitude_change = (result & 1) ? ~(result >> 1) : (result >> 1);
+
+        /* Höhe ändern */
+        shift = result = 0;
+        do {
+            byte = str[index++] - 63;
+            result |= (byte & 0x1f) << shift;
+            shift += 5;
+        } while (byte >= 0x20);
+        altitude_change = (result & 1) ? ~(result >> 1) : (result >> 1);
+
+        lon += longitude_change;
+        lat += latitude_change;
+        alt += altitude_change;
+
+        /* Radius ändern, falls vorhanden */
+        if (str[index] != '\0') {
+            shift = result = 0;
+            do {
+                byte = str[index++] - 63;
+                result |= (byte & 0x1f) << shift;
+                shift += 5;
+            } while (byte >= 0x20);
+            radius_change = (result & 1) ? ~(result >> 1) : (result >> 1);
+            rad += radius_change;
+        }
+
+        /* Koordinaten hinzufügen */
+        coordinates = (Coordinate*)realloc(coordinates, sizeof(Coordinate) * (coordinates_size + 1));
+        coordinates[coordinates_size].lon = lon / factor;
+        coordinates[coordinates_size].lat = lat / factor;
+        coordinates[coordinates_size].alt = alt;
+        coordinates[coordinates_size].rad = rad;
+        coordinates_size++;
+    }
+
+    *size = coordinates_size;
+    return coordinates;
+}
+
+
